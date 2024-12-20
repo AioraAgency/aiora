@@ -16,3 +16,4 @@ export interface RedditComment {
     score: number;
     created: Date;
 }
+

@@ -7,6 +7,7 @@ import { LensAgentClient } from "@ai16z/client-lens";
 import { SlackClientInterface } from "@ai16z/client-slack";
 import { TelegramClientInterface } from "@ai16z/client-telegram";
 import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { RedditClientInterface } from "@ai16z/client-reddit";
 import {
     AgentRuntime,
     CacheManager,
@@ -361,6 +362,13 @@ export async function initializeClients(
     if (clientTypes.includes(Clients.TELEGRAM)) {
         const telegramClient = await TelegramClientInterface.start(runtime);
         if (telegramClient) clients.telegram = telegramClient;
+    }
+
+        if (clientTypes.includes(Clients.REDDIT)) {
+        const redditClient = await RedditClientInterface.start(runtime);
+        if (redditClient) {
+            clients.reddit = redditClient;
+        }
     }
 
     if (clientTypes.includes(Clients.TWITTER)) {
