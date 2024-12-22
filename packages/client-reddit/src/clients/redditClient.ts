@@ -6,10 +6,12 @@ import Snoowrap from "snoowrap";
 export class RedditClient {
     provider: RedditProvider;
     postClient: RedditPostClient;
+    runtime: IAgentRuntime;
 
     constructor(runtime: IAgentRuntime) {
+        this.runtime = runtime;
         const reddit = new Snoowrap({
-            userAgent: 'your-user-agent',
+            userAgent: runtime.getSetting("REDDIT_USER_AGENT"),
             clientId: runtime.getSetting("REDDIT_CLIENT_ID"),
             clientSecret: runtime.getSetting("REDDIT_CLIENT_SECRET"),
             refreshToken: runtime.getSetting("REDDIT_REFRESH_TOKEN")
@@ -19,17 +21,32 @@ export class RedditClient {
     }
 
     async start() {
-        // Initialize the Reddit client
+        elizaLogger.info("Starting Reddit client");
         await this.provider.start();
 
-        // Start automatic posting if enabled
-        const autoPost = this.provider.runtime.getSetting("REDDIT_AUTO_POST") === "true";
+        const autoPost = this.runtime.getSetting("REDDIT_AUTO_POST") === "true";
         if (autoPost) {
-            await this.postClient.start();
+            elizaLogger.info("Auto-posting enabled for Reddit");
+            await this.postClient.start(true);
         }
     }
 
     async stop() {
+        elizaLogger.info("Stopping Reddit client");
         await this.postClient.stop();
+    }
+
+    async submitPost(subreddit: string, title: string, content: string) {
+        try {
+            const post = await this.provider.submitSelfpost({
+                subredditName: subreddit,
+                title,
+                text: content
+            });
+            return post;
+        } catch (error) {
+            elizaLogger.error("Error submitting Reddit post:", error);
+            throw error;
+        }
     }
 }

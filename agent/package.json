@@ -26,6 +26,7 @@
     "@ai16z/client-lens": "workspace:*",
     "@ai16z/client-telegram": "workspace:*",
     "@ai16z/client-twitter": "workspace:*",
+    "@ai16z/client-truth-social": "workspace:*",
     "@ai16z/client-slack": "workspace:*",
     "@ai16z/client-reddit":"workspace:*",
     "@ai16z/eliza": "workspace:*",

@@ -618,6 +618,7 @@ export enum Clients {
     AUTO = "auto",
     SLACK = "slack",
     REDDIT = "reddit",
+    TRUTH_SOCIAL = "truth_social",
 }
 
 export interface IAgentConfig {

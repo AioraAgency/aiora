@@ -8,6 +8,7 @@ import { SlackClientInterface } from "@ai16z/client-slack";
 import { TelegramClientInterface } from "@ai16z/client-telegram";
 import { TwitterClientInterface } from "@ai16z/client-twitter";
 import { RedditClientInterface } from "@ai16z/client-reddit";
+import { TruthSocialClientInterface } from "@ai16z/client-truth-social";
 import {
     AgentRuntime,
     CacheManager,
@@ -368,6 +369,13 @@ export async function initializeClients(
         const redditClient = await RedditClientInterface.start(runtime);
         if (redditClient) {
             clients.reddit = redditClient;
+        }
+    }
+
+    if (clientTypes.includes(Clients.TRUTH_SOCIAL)) {
+        const truthSocialClient = await TruthSocialClientInterface.start(runtime);
+        if (truthSocialClient) {
+            clients.truthSocial = truthSocialClient;
         }
     }
 

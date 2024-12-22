@@ -132,6 +132,9 @@ importers:
       '@ai16z/client-telegram':
         specifier: workspace:*
         version: link:../packages/client-telegram
+      '@ai16z/client-truth-social':
+        specifier: workspace:*
+        version: link:../packages/client-truth-social
       '@ai16z/client-twitter':
         specifier: workspace:*
         version: link:../packages/client-twitter
@@ -711,6 +714,34 @@ importers:
       telegraf:
         specifier: 4.16.3
         version: 4.16.3(encoding@0.1.13)
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
+    devDependencies:
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.1(@swc/helpers@0.5.15))(jiti@2.4.1)(postcss@8.4.49)(typescript@5.6.3)(yaml@2.6.1)
+
+  packages/client-truth-social:
+    dependencies:
+      '@ai16z/eliza':
+        specifier: workspace:*
+        version: link:../core
+      axios:
+        specifier: ^1.6.7
+        version: 1.7.9(debug@4.4.0)
+      combined-stream:
+        specifier: ^1.0.8
+        version: 1.0.8
+      form-data:
+        specifier: ^4.0.0
+        version: 4.0.1
+      glob:
+        specifier: 11.0.0
+        version: 11.0.0
+      whatwg-url:
+        specifier: 7.1.0
+        version: 7.1.0
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -36541,7 +36572,7 @@ snapshots:
       array-differ: 3.0.0
       array-union: 2.1.0
       arrify: 2.0.1
-      minimatch: 3.0.5
+      minimatch: 3.1.2
 
   mustache@4.0.0: {}
 

@@ -1656,3 +1656,48 @@ export async function generateTweetActions({
         retryDelay *= 2;
     }
 }
+
+export async function generateTruthActions({
+    runtime,
+    context,
+    modelClass,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: string;
+}): Promise<ActionResponse | null> {
+    let retryDelay = 1000;
+    while (true) {
+        try {
+            const response = await generateText({
+                runtime,
+                context,
+                modelClass,
+            });
+            console.debug(
+                "Received response from generateText for truth actions:",
+                response
+            );
+            const { actions } = parseActionResponseFromText(response.trim());
+            if (actions) {
+                console.debug("Parsed truth actions:", actions);
+                return actions;
+            } else {
+                elizaLogger.debug("generateTruthActions no valid response");
+            }
+        } catch (error) {
+            elizaLogger.error("Error in generateTruthActions:", error);
+            if (
+                error instanceof TypeError &&
+                error.message.includes("queueTextCompletion")
+            ) {
+                elizaLogger.error(
+                    "TypeError: Cannot read properties of null (reading 'queueTextCompletion')"
+                );
+            }
+        }
+        elizaLogger.log(`Retrying in ${retryDelay}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        retryDelay *= 2;
+    }
+}
