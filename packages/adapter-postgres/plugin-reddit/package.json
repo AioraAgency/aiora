@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@ai16z/eliza": "workspace:*",
-    "snoowrap": "^1.23.0"  // Reddit API wrapper
+    "snoowrap": "^1.23.0"  
   },
   "devDependencies": {
     "vitest": "^2.1.4",

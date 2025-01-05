@@ -19,7 +19,15 @@ import { settings } from "@ai16z/eliza";
 import { createApiRouter } from "./api.ts";
 import * as fs from "fs";
 import * as path from "path";
+import { EventEmitter } from 'events';
 const upload = multer({ storage: multer.memoryStorage() });
+
+interface AgentStatus {
+    currentTask?: string;
+    lastUpdate: Date;
+    source?: string;
+    metadata?: any;
+}
 
 export const messageHandlerTemplate =
     // {{goals}}
@@ -56,11 +64,24 @@ export class DirectClient {
     private agents: Map<string, AgentRuntime>; // container management
     private server: any; // Store server instance
     public startAgent: Function; // Store startAgent functor
+    private agentStatus: Map<string, AgentStatus>;
+    private statusEmitter: EventEmitter;
 
     constructor() {
         elizaLogger.log("DirectClient constructor");
         this.app = express();
-        this.app.use(cors());
+        this.app.use(cors({
+            origin: [
+                'http://*.aiora.agency',
+                'https://*.aiora.agency',
+                // For development
+                'http://localhost:3000'
+            ],
+            methods: ['GET', 'POST'],
+            credentials: true,
+            // Required for SSE
+            exposedHeaders: ['Content-Type', 'Connection']
+        }));
         this.agents = new Map();
 
         this.app.use(bodyParser.json());
@@ -370,6 +391,28 @@ export class DirectClient {
                 }
             }
         );
+
+        this.agentStatus = new Map();
+        this.statusEmitter = new EventEmitter();
+
+        // Set up SSE endpoint for real-time status updates
+        this.app.get('/:agentId/status/stream', (req, res) => {
+            const agentId = req.params.agentId;
+
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Connection', 'keep-alive');
+
+            const listener = (status: AgentStatus) => {
+                res.write(`data: ${JSON.stringify(status)}\n\n`);
+            };
+
+            this.statusEmitter.on(`status-${agentId}`, listener);
+
+            req.on('close', () => {
+                this.statusEmitter.removeListener(`status-${agentId}`, listener);
+            });
+        });
     }
 
     // agent/src/index.ts:startAgent calls this
@@ -416,6 +459,25 @@ export class DirectClient {
                 elizaLogger.success("Server stopped");
             });
         }
+    }
+
+    public updateAgentStatus(agentId: string, status: Partial<AgentStatus>) {
+        const currentStatus = this.agentStatus.get(agentId) || {
+            lastUpdate: new Date()
+        };
+
+        const newStatus = {
+            ...currentStatus,
+            ...status,
+            lastUpdate: new Date()
+        };
+
+        this.agentStatus.set(agentId, newStatus);
+        this.statusEmitter.emit(`status-${agentId}`, newStatus);
+    }
+
+    public getAgentStatus(agentId: string): AgentStatus | undefined {
+        return this.agentStatus.get(agentId);
     }
 }
 

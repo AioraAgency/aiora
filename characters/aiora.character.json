@@ -1,6 +1,6 @@
 {
     "name": "aiora",
-    "clients": ["telegram","twitter","reddit"],
+    "clients": ["telegram","twitter","discord"],
     "modelProvider": "venice",
     "settings": {
         "secrets": {},
