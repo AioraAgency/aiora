@@ -60,6 +60,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
+import { MentionProcessor } from "@ai16z/eliza";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -621,6 +622,12 @@ async function startAgent(
 
         // start assigned clients
         runtime.clients = await initializeClients(character, runtime);
+
+        // Add mentions processor if this is Aiora and Twitter client is enabled
+        if (character.name === "aiora" && character.clients.includes("twitter")) {
+            const mentionProcessor = new MentionProcessor(runtime);
+            mentionProcessor.start();
+        }
 
         // add to container
         directClient.registerAgent(runtime);
