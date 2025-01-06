@@ -204,9 +204,6 @@ importers:
       '@ai16z/plugin-ton':
         specifier: workspace:*
         version: link:../packages/plugin-ton
-      '@ai16z/plugin-twilio':
-        specifier: workspace:*
-        version: link:../packages/plugin-twilio
       '@ai16z/plugin-zksync-era':
         specifier: workspace:*
         version: link:../packages/plugin-zksync-era
@@ -913,7 +910,7 @@ importers:
         specifier: 2.1.27
         version: 2.1.27
       '@types/jest':
-        specifier: 29.5.14
+        specifier: ^29.0.0
         version: 29.5.14
       '@types/mocha':
         specifier: 10.0.10
@@ -943,7 +940,7 @@ importers:
         specifier: 16.4.5
         version: 16.4.5
       jest:
-        specifier: 29.7.0
+        specifier: ^29.0.0
         version: 29.7.0(@types/node@22.8.4)(ts-node@10.9.2(@swc/core@1.10.1(@swc/helpers@0.5.15))(@types/node@22.8.4)(typescript@5.6.3))
       lint-staged:
         specifier: 15.2.10
@@ -961,7 +958,7 @@ importers:
         specifier: 2.79.2
         version: 2.79.2
       ts-jest:
-        specifier: 29.2.5
+        specifier: ^29.0.0
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.8.4)(ts-node@10.9.2(@swc/core@1.10.1(@swc/helpers@0.5.15))(@types/node@22.8.4)(typescript@5.6.3)))(typescript@5.6.3)
       ts-node:
         specifier: 10.9.2
@@ -1817,25 +1814,6 @@ importers:
       '@types/dompurify':
         specifier: 3.2.0
         version: 3.2.0
-
-  packages/plugin-twilio:
-    dependencies:
-      '@ai16z/eliza':
-        specifier: workspace:*
-        version: link:../core
-      twilio:
-        specifier: ^5.4.0
-        version: 5.4.0
-      ws:
-        specifier: ^8.11.0
-        version: 8.18.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-    devDependencies:
-      '@types/node':
-        specifier: ^20.0.0
-        version: 20.17.9
-      tsup:
-        specifier: 8.3.5
-        version: 8.3.5(@swc/core@1.10.1(@swc/helpers@0.5.15))(jiti@2.4.1)(postcss@8.4.49)(typescript@5.6.3)(yaml@2.6.1)
 
   packages/plugin-video-generation:
     dependencies:
@@ -16840,9 +16818,6 @@ packages:
     resolution: {integrity: sha512-Gf9qqc58SpCA/xdziiHz35F4GNIWYWZrEshUc/G/r5BnLph6xpKuLeoJoQuj5WfBIx/eQLf+hmVPYHaxJu7V2g==}
     engines: {node: '>= 10.13.0'}
 
-  scmp@2.1.0:
-    resolution: {integrity: sha512-o/mRQGk9Rcer/jEEw/yw4mwo3EU/NvYvp577/Btqrym9Qy5/MdWGBqipbALgd2lrdWTJ5/gqDusxfnQBxOxT2Q==}
-
   scrypt-js@3.0.1:
     resolution: {integrity: sha512-cdwTTnqPu0Hyvf5in5asVdZocVDTNRmR7XEcJuIzMjJeSHybHl7vpB66AzwTaIg6CLSbtjcxc8fqcySfnTkccA==}
 
@@ -18026,10 +18001,6 @@ packages:
   tweetnacl@1.0.3:
     resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
 
-  twilio@5.4.0:
-    resolution: {integrity: sha512-kEmxzdOLTzXzUEXIkBVwT1Itxlbp+rtGrQogNfPtSE3EjoEsxrxB/9tdMIEbrsioL8CzTk/+fiKNJekAyHxjuQ==}
-    engines: {node: '>=14.0'}
-
   twitter-api-v2@1.18.2:
     resolution: {integrity: sha512-ggImmoAeVgETYqrWeZy+nWnDpwgTP+IvFEc03Pitt1HcgMX+Yw17rP38Fb5FFTinuyNvS07EPtAfZ184uIyB0A==}
 
@@ -19166,10 +19137,6 @@ packages:
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
-
-  xmlbuilder@13.0.2:
-    resolution: {integrity: sha512-Eux0i2QdDYKbdbA6AM6xE4m6ZTZr4G4xF9kahI2ukSEMCzwce2eX9WlTI5J3s+NU7hpasFsr8hWIONae7LluAQ==}
-    engines: {node: '>=6.0'}
 
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
@@ -39899,8 +39866,6 @@ snapshots:
       ajv-formats: 2.1.1(ajv@8.17.1)
       ajv-keywords: 5.1.0(ajv@8.17.1)
 
-  scmp@2.1.0: {}
-
   scrypt-js@3.0.1: {}
 
   scryptsy@2.1.0: {}
@@ -41318,19 +41283,6 @@ snapshots:
   tweetnacl@0.14.5: {}
 
   tweetnacl@1.0.3: {}
-
-  twilio@5.4.0:
-    dependencies:
-      axios: 1.7.9(debug@4.4.0)
-      dayjs: 1.11.13
-      https-proxy-agent: 5.0.1
-      jsonwebtoken: 9.0.2
-      qs: 6.13.1
-      scmp: 2.1.0
-      xmlbuilder: 13.0.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
 
   twitter-api-v2@1.18.2: {}
 
@@ -42885,8 +42837,6 @@ snapshots:
       sax: 1.4.1
 
   xml-name-validator@5.0.0: {}
-
-  xmlbuilder@13.0.2: {}
 
   xmlchars@2.2.0: {}
 

@@ -1,5 +1,8 @@
 import { AgentRuntime } from "./runtime";
 import { elizaLogger } from "./logger";
+import { Memory } from "./types";
+import { generateText } from "./generation";
+import { ModelClass } from "./types";
 
 export interface MentionProcessorOptions {
     pollingInterval?: number; // in milliseconds
@@ -35,7 +38,20 @@ Consider:
 Provide your thoughts in my signature style with actions and dark playfulness.`;
 
         try {
-            const response = await this.runtime.think(prompt);
+            const message: Memory = {
+                id: crypto.randomUUID(),
+                content: { text: prompt },
+                userId: this.runtime.agentId,
+                roomId: this.runtime.agentId,
+                createdAt: Date.now(),
+                agentId: this.runtime.agentId
+            };
+            const state = await this.runtime.composeState(message);
+            const response = await generateText({
+                runtime: this.runtime,
+                context: JSON.stringify(state),
+                modelClass: ModelClass.LARGE
+            });
             return response;
         } catch (error) {
             elizaLogger.error("Error processing mention:", error);
@@ -44,28 +60,24 @@ Provide your thoughts in my signature style with actions and dark playfulness.`;
     }
 
     private async processMentions() {
-        const twitterClient = this.runtime.clients.twitter;
-        if (!twitterClient) {
-            elizaLogger.error("Twitter client not found");
-            return;
-        }
-
         try {
-            const status = await twitterClient.getStatus();
-            const mentions = status?.recentProfile?.mentions || [];
+            // Mock data for testing
+            const mockMentions = [{
+                id: '123',
+                text: '@aiora Hey there! Testing the mention processor'
+            }];
+            
+            elizaLogger.info("Checking for new mentions...");
+            elizaLogger.info(`Found ${mockMentions.length} mentions to process`);
 
-            for (const mention of mentions) {
+            for (const mention of mockMentions) {
+                elizaLogger.info(`Processing mention: ${mention.text}`);
                 const thoughts = await this.reviewMention(mention);
                 
                 if (thoughts) {
-                    await twitterClient.updateStatus({
-                        mentionId: mention.id,
-                        response: thoughts
-                    });
-                    
-                    await new Promise(resolve => 
-                        setTimeout(resolve, this.options.retryDelay)
-                    );
+                    elizaLogger.info(`Responding to mention with: ${thoughts}`);
+                    // Log instead of making API call
+                    elizaLogger.info(`Would have posted response to Twitter: ${thoughts}`);
                 }
             }
         } catch (error) {
