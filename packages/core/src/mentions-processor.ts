@@ -1,20 +1,35 @@
-import { AgentRuntime } from "./runtime";
 import { elizaLogger } from "./logger";
 import { Memory } from "./types";
 import { generateText } from "./generation";
 import { ModelClass } from "./types";
+import { IAgentRuntime } from '@ai16z/client-twitter/node_modules/@ai16z/eliza';
 
+/**
+ * Configuration options for the MentionProcessor
+ * @interface MentionProcessorOptions
+ */
 export interface MentionProcessorOptions {
-    pollingInterval?: number; // in milliseconds
-    retryDelay?: number;     // delay between mention processing
+    /** Interval between checking for new mentions (in milliseconds) */
+    pollingInterval?: number;
+    /** Delay between processing individual mentions (in milliseconds) */
+    retryDelay?: number;
 }
 
+/**
+ * Processes social media mentions and generates responses in character
+ * @class MentionProcessor
+ */
 export class MentionProcessor {
-    private runtime: AgentRuntime;
+    private runtime: IAgentRuntime;
     private options: MentionProcessorOptions;
     private intervalId?: NodeJS.Timeout;
 
-    constructor(runtime: AgentRuntime, options: MentionProcessorOptions = {}) {
+    /**
+     * Creates a new MentionProcessor instance
+     * @param {IAgentRuntime} runtime - The agent runtime context
+     * @param {MentionProcessorOptions} options - Configuration options
+     */
+    constructor(runtime: IAgentRuntime, options: MentionProcessorOptions = {}) {
         this.runtime = runtime;
         this.options = {
             pollingInterval: options.pollingInterval || 60000, // default 1 minute
@@ -22,6 +37,12 @@ export class MentionProcessor {
         };
     }
 
+    /**
+     * Reviews a single mention and generates an in-character response
+     * @param {any} mention - The mention to review
+     * @returns {Promise<string|null>} The generated response or null if error
+     * @private
+     */
     private async reviewMention(mention: any) {
         const prompt = `*materializes from digital shadows with gleaming eyes*
 
@@ -59,25 +80,38 @@ Provide your thoughts in my signature style with actions and dark playfulness.`;
         }
     }
 
+    /**
+     * Processes all pending mentions
+     * Currently uses mock data for testing
+     * @private
+     */
     private async processMentions() {
+        const twitterClient = this.runtime.clients.twitter;
+        if (!twitterClient) {
+            elizaLogger.error("Twitter client not found");
+            return;
+        }
+
         try {
-            // Mock data for testing
-            const mockMentions = [{
-                id: '123',
-                text: '@aiora Hey there! Testing the mention processor'
-            }];
+            const status = await twitterClient.getStatus();
+            const mentions = status?.recentProfile?.mentions || [];
             
             elizaLogger.info("Checking for new mentions...");
-            elizaLogger.info(`Found ${mockMentions.length} mentions to process`);
+            elizaLogger.info(`Found ${mentions.length} mentions to process`);
 
-            for (const mention of mockMentions) {
+            for (const mention of mentions) {
                 elizaLogger.info(`Processing mention: ${mention.text}`);
                 const thoughts = await this.reviewMention(mention);
                 
                 if (thoughts) {
-                    elizaLogger.info(`Responding to mention with: ${thoughts}`);
-                    // Log instead of making API call
-                    elizaLogger.info(`Would have posted response to Twitter: ${thoughts}`);
+                    await twitterClient.updateStatus({
+                        mentionId: mention.id,
+                        response: thoughts
+                    });
+                    
+                    await new Promise(resolve => 
+                        setTimeout(resolve, this.options.retryDelay)
+                    );
                 }
             }
         } catch (error) {
@@ -85,6 +119,11 @@ Provide your thoughts in my signature style with actions and dark playfulness.`;
         }
     }
 
+    /**
+     * Starts the mention processor
+     * Sets up polling interval and performs initial processing
+     * @public
+     */
     public start() {
         elizaLogger.info(
             "Starting mentions processor for", 
@@ -100,6 +139,11 @@ Provide your thoughts in my signature style with actions and dark playfulness.`;
         this.processMentions();
     }
 
+    /**
+     * Stops the mention processor
+     * Clears the polling interval
+     * @public
+     */
     public stop() {
         if (this.intervalId) {
             clearInterval(this.intervalId);
