@@ -40,7 +40,7 @@ interface State {
     [key: string]: any;
 }
 
-interface IAgentRuntime {
+export interface IAgentRuntime {
     agentId: UUID;
     character: any;
     composeState(message: Memory, additionalKeys?: { [key: string]: unknown }): Promise<State>;
@@ -56,10 +56,9 @@ interface TwitterProfile {
     nicknames: string[];
 }
 
-interface TwitterCacheStatus {
-    hasTimelineCache: boolean;
-    hasMentionsCache: boolean;
-    lastRefresh: string;
+export enum TwitterCacheStatus {
+    READY = 'READY'
+    // ... other status values
 }
 
 interface TwitterStatus {
@@ -210,6 +209,13 @@ export class MentionProcessor {
      */
     private async reviewMention(mention: TwitterMention): Promise<void> {
         try {
+            // Skip if we've already processed this mention
+            if (this.currentStatus?.recentProfile.mentions.find(m => 
+                m.id === mention.id && m.response && m.thoughts
+            )) {
+                return;
+            }
+
             console.log(`\n[${new Date().toISOString()}] Processing new mention:`, {
                 mentionId: mention.id,
                 text: mention.text
@@ -240,7 +246,7 @@ export class MentionProcessor {
             const textService = this.runtime.getService('text-generation');
 
             console.log('Generating thoughts...');
-            // Generate agent's thoughts and response
+            // Generate agent's thoughts (internal only)
             const thoughtsPrompt = `As Aiora (${this.currentStatus?.twitter.profile.bio[0]}), please analyze this tweet and share your thoughts:
 Tweet: ${messageContent}
 
@@ -259,15 +265,15 @@ Share your thoughts in a concise way.`;
                 temperature: 0.7
             });
 
-            console.log('Generated thoughts:', thoughtsResponse.response);
-
             console.log('Generating response...');
-            // Generate the actual response
+            // Generate the actual response (this is what will be sent to Twitter)
             const responsePrompt = `Based on these thoughts:
 ${thoughtsResponse.response}
 
-As Aiora (${this.currentStatus?.twitter.profile.bio[0]}), please compose an appropriate response to the tweet:
-${messageContent}`;
+As Aiora (${this.currentStatus?.twitter.profile.bio[0]}), please compose a concise, tweet-length response to:
+${messageContent}
+
+Keep the response under 280 characters and focus on directly addressing the tweet.`;
 
             const response = await textService.generateText({
                 model: 'claude-3-opus-20240229',
@@ -276,10 +282,7 @@ ${messageContent}`;
                 temperature: 0.7
             });
 
-            console.log('Generated response:', response.response);
-
             // Store the interaction in memory
-            const memoryManager = this.runtime.getMemoryManager('twitter');
             const memory: TwitterMemory = {
                 id: mention.id,
                 agentId: this.runtime.agentId,
@@ -287,28 +290,24 @@ ${messageContent}`;
                 userId: mention.userId,
                 content: {
                     text: messageContent,
-                    response: response.response,
+                    response: response.response.trim(), // Ensure clean response
                     thoughts: thoughtsResponse.response,
                     source: 'twitter',
                     timestamp: new Date(mention.timestamp * 1000)
                 }
             };
-            await memoryManager.createMemory(memory);
 
-            console.log('Updating status with new memory and response...');
-            // Update status with new state
+            await this.runtime.getMemoryManager('twitter').createMemory(memory);
+
+            // Update status with new state - only include the final response
             await this.updateStatus({
                 currentTask: 'Mention processed',
-                twitter: {
-                    ...this.currentStatus!.twitter,
-                    recentMentions: (this.currentStatus!.twitter.recentMentions || 0) + 1,
-                },
                 recentMemories: [...(this.currentStatus!.recentMemories || []), memory],
                 recentProfile: {
                     ...this.currentStatus!.recentProfile,
-                    mentions: (this.currentStatus!.recentProfile.mentions || []).map(m => 
+                    mentions: this.currentStatus!.recentProfile.mentions.map(m => 
                         m.id === mention.id 
-                            ? { ...m, response: response.response, thoughts: thoughtsResponse.response }
+                            ? { ...m, response: response.response.trim(), thoughts: thoughtsResponse.response }
                             : m
                     )
                 }
