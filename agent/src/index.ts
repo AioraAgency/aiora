@@ -26,6 +26,7 @@ import {
     settings,
     stringToUuid,
     validateCharacterConfig,
+    MentionProcessor
 } from "@ai16z/eliza";
 import { zgPlugin } from "@ai16z/plugin-0g";
 import { bootstrapPlugin } from "@ai16z/plugin-bootstrap";
@@ -621,6 +622,12 @@ async function startAgent(
 
         // start assigned clients
         runtime.clients = await initializeClients(character, runtime);
+
+        // Add mentions processor if this is Aiora and Twitter client is enabled
+        if (character.name === "aiora" && character.clients.includes(Clients.TWITTER)) {
+            const mentionProcessor = new MentionProcessor(runtime);
+            mentionProcessor.start();
+        }
 
         // add to container
         directClient.registerAgent(runtime);
