@@ -3,13 +3,17 @@
  * @module mentions-processor
  */
 
-import * as dotenv from 'dotenv';
-import path from 'path';
-import axios from 'axios';
+import { config } from 'dotenv';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Get current file's directory in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load environment variables
-dotenv.config({
-    path: path.resolve(__dirname, '../../../.env')
+config({
+    path: resolve(__dirname, '../../../.env')
 });
 
 type UUID = `${string}-${string}-${string}-${string}-${string}`;
@@ -105,8 +109,8 @@ interface StatusUpdate {
 }
 
 export interface MentionProcessorOptions {
-    pollingInterval: number;
-    retryDelay: number;
+    pollingInterval?: number;
+    retryDelay?: number;
 }
 
 export class MentionProcessor {
@@ -117,11 +121,11 @@ export class MentionProcessor {
     private readonly statusEndpoint: string = 'https://api.aiora.agency/agents/dad53aba-bd70-05f9-8319-7bc6b4160812/status';
     private currentStatus: StatusUpdate | null = null;
 
-    constructor(runtime: IAgentRuntime, options: MentionProcessorOptions) {
+    constructor(runtime: IAgentRuntime, options: MentionProcessorOptions = {}) {
         this.runtime = runtime;
         this.options = {
-            pollingInterval: options.pollingInterval || 60000, // Default 1 minute
-            retryDelay: options.retryDelay || 5000 // Default 5 seconds
+            pollingInterval: options?.pollingInterval || 60000,
+            retryDelay: options?.retryDelay || 5000
         };
     }
 
@@ -150,8 +154,11 @@ export class MentionProcessor {
     private async updateStatus(update: Partial<StatusUpdate> = {}): Promise<void> {
         try {
             if (!update.currentTask) {
-                const response = await axios.get<StatusUpdate>(this.statusEndpoint);
-                this.currentStatus = response.data;
+                const response = await fetch(this.statusEndpoint);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                this.currentStatus = await response.json();
             } else {
                 // Merge the update with current status
                 this.currentStatus = {
@@ -160,7 +167,16 @@ export class MentionProcessor {
                     lastUpdate: new Date().toISOString()
                 };
                 // Post the update
-                await axios.post(this.statusEndpoint, this.currentStatus);
+                const response = await fetch(this.statusEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.currentStatus)
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
             }
         } catch (error) {
             console.error('Error updating status:', error);
