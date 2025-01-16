@@ -3,17 +3,13 @@
  * @module mentions-processor
  */
 
-import { config } from 'dotenv';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-// Get current file's directory in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import * as dotenv from 'dotenv';
+import path from 'path';
+import https from 'https';
 
 // Load environment variables
-config({
-    path: resolve(__dirname, '../../../.env')
+dotenv.config({
+    path: path.resolve(__dirname, '../../../.env')
 });
 
 type UUID = `${string}-${string}-${string}-${string}-${string}`;
@@ -109,8 +105,8 @@ interface StatusUpdate {
 }
 
 export interface MentionProcessorOptions {
-    pollingInterval?: number;
-    retryDelay?: number;
+    pollingInterval: number;
+    retryDelay: number;
 }
 
 export class MentionProcessor {
@@ -121,11 +117,11 @@ export class MentionProcessor {
     private readonly statusEndpoint: string = 'https://api.aiora.agency/agents/dad53aba-bd70-05f9-8319-7bc6b4160812/status';
     private currentStatus: StatusUpdate | null = null;
 
-    constructor(runtime: IAgentRuntime, options: MentionProcessorOptions = {}) {
+    constructor(runtime: IAgentRuntime, options: MentionProcessorOptions) {
         this.runtime = runtime;
         this.options = {
-            pollingInterval: options?.pollingInterval || 60000,
-            retryDelay: options?.retryDelay || 5000
+            pollingInterval: options.pollingInterval || 60000, // Default 1 minute
+            retryDelay: options.retryDelay || 5000 // Default 5 seconds
         };
     }
 
@@ -154,11 +150,14 @@ export class MentionProcessor {
     private async updateStatus(update: Partial<StatusUpdate> = {}): Promise<void> {
         try {
             if (!update.currentTask) {
-                const response = await fetch(this.statusEndpoint);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                this.currentStatus = await response.json();
+                const response = await new Promise<StatusUpdate>((resolve, reject) => {
+                    https.get(this.statusEndpoint, (res) => {
+                        let data = '';
+                        res.on('data', (chunk) => data += chunk);
+                        res.on('end', () => resolve(JSON.parse(data)));
+                    }).on('error', reject);
+                });
+                this.currentStatus = response;
             } else {
                 // Merge the update with current status
                 this.currentStatus = {
@@ -166,17 +165,30 @@ export class MentionProcessor {
                     ...update,
                     lastUpdate: new Date().toISOString()
                 };
-                // Post the update
-                const response = await fetch(this.statusEndpoint, {
+                // Use https.request to post the update 
+                const postData = JSON.stringify(this.currentStatus);
+                
+                const options = {
+                    hostname: 'api.aiora.agency',
+                    path: '/agents/dad53aba-bd70-05f9-8319-7bc6b4160812/status',
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(this.currentStatus)
+                        'Content-Length': Buffer.byteLength(postData)
+                    }
+                };
+
+                const req = https.request(options, (res) => {
+                    console.log(`Status update posted: ${res.statusCode}`);
                 });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                
+                req.on('error', (error) => {
+                    console.error('Error posting status update:', error);
+                    throw error;
+                });
+                
+                req.write(postData);
+                req.end();
             }
         } catch (error) {
             console.error('Error updating status:', error);
